@@ -12,7 +12,8 @@ import UIKit
 
 class ViewController: UIViewController,UITableViewDataSource,UITableViewDelegate{
     //teacher控件
-    @IBOutlet weak var addText: UITextField!
+
+
     
     @IBOutlet weak var table: UITableView!
 
@@ -23,16 +24,19 @@ class ViewController: UIViewController,UITableViewDataSource,UITableViewDelegate
     
     @IBOutlet weak var chooseStu: UILabel!
     
-    @IBOutlet weak var stuAddText: UITextField!
+
+     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        teachersArry.append("123456")
+        
+        studentsArry.append(Student (stuNo: 1, firstName: "1", lastName: "1", age:1, gender: Gender(rawValue: 1)!))
     }
     //学生数组
     var studentsArry = [Student]()
     //教师数组
-    var teachersArry = [String]()
+    var teachersArry = [Teacher]()
     //获取数量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
@@ -45,40 +49,45 @@ class ViewController: UIViewController,UITableViewDataSource,UITableViewDelegate
     }
     //cell的分别显示
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        var cell:UITableViewCell
+        
+        let teacherCell = table.dequeueReusableCell(withIdentifier: "teacherCell")!
+        let stuCell = stuTable.dequeueReusableCell(withIdentifier: "stuCell") as! stuTableViewCell
         if tableView == table {
-            cell = table.dequeueReusableCell(withIdentifier: "teacherCell")!
-            cell.textLabel?.text = teachersArry[indexPath.row]//.fullName
-            return cell
+            teacherCell.textLabel?.text = "Name:\(teachersArry[indexPath.row].fullName)"
+            teacherCell.detailTextLabel?.text="Title:\(teachersArry[indexPath.row].title)"
+            return teacherCell
         }
         else{
-            cell = stuTable.dequeueReusableCell(withIdentifier: "stuCell")!
-            cell.textLabel?.text = studentsArry[indexPath.row].fullName
-            return cell
+            stuCell.stuNum.text = "NO:\(String(studentsArry[indexPath.row].stuNo))"
+            stuCell.stuName.text = "Name:\(studentsArry[indexPath.row].fullName)"
+            stuCell.stuAge.text = "Age:\(String(studentsArry[indexPath.row].age))"
+            return stuCell
         }
         
     }
     //choose的分别显示
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView == table{
-            chooseTeacher.text = "You choose teacher: \(teachersArry[indexPath.row])"
+            chooseTeacher.text = "You choose teacher: \(teachersArry[indexPath.row].fullName)"
         }
         else{
-            chooseStu.text = "You choose student: \(studentsArry[indexPath.row])"
+            chooseStu.text = "You choose student: \(studentsArry[indexPath.row].stuNo)"
         }
     }
     //删除功能
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete{
-            if tableView == table{
+        if tableView == table{
+            if editingStyle == .delete{
                 teachersArry.remove(at: indexPath.row)
                 tableView.deleteRows(at: [indexPath], with: .fade)
+                
             }
-            else{
+        }
+        else if tableView == stuTable && editingStyle == .delete{
                 studentsArry.remove(at: indexPath.row)
                 tableView.deleteRows(at: [indexPath], with: .fade)
             }
-        }
+        
     }
     //移动功能
     func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
@@ -89,24 +98,75 @@ class ViewController: UIViewController,UITableViewDataSource,UITableViewDelegate
             let text = teachersArry.remove(at: sourceIndexPath.row)
             teachersArry.insert(text, at: destinationIndexPath.row)
         }
-        else{
+        else if tableView == stuTable{
             let text = studentsArry.remove(at: sourceIndexPath.row)
             studentsArry.insert(text, at: destinationIndexPath.row)
         }
     }
     
     
-    //添加功能
+    //teacher添加功能
     @IBAction func add(_ sender: Any) {
-        if let text = addText.text{
-           //防止添加空数据
-            if !text .isEmpty{
-                teachersArry.append(text)
-                table.reloadData()
-                addText.resignFirstResponder()
-                addText.text = nil
-            }
+        addTeacher()
+        
+        
+    }
+    var  teacherAlert:UIAlertController!
+    @objc func addTeacher(){
+        teacherAlert = UIAlertController(title: "Teacher", message: "add", preferredStyle: .alert)
+        teacherAlert.addTextField {(text) in
+            text.placeholder = "姓"}
+        teacherAlert.addTextField {(text) in
+            text.placeholder = "名"}
+        teacherAlert.addTextField {(text) in
+            text.placeholder = "科目"}
+        teacherAlert.addTextField {(text) in
+            text.placeholder = "性别"}
+        teacherAlert.addTextField {(text) in
+            text.placeholder = "年龄"}
+        teacherAlert.addTextField {(text) in
+            text.placeholder = "公寓(1,2,3号公寓。默认为1)"}
+        
+        let OK = UIAlertAction(title: "确定", style: .default) { (teAlert) in
+            self.TeachAdd()
+            self.table.reloadData()
         }
+        let cancel = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        teacherAlert.addAction(OK)
+        teacherAlert.addAction(cancel)
+        //显示提示框
+        self.present(teacherAlert, animated: true, completion: nil)
+    }
+    func TeachAdd(){
+        
+        let firstN = teacherAlert.textFields![0].text!
+        let lastN = teacherAlert.textFields![1].text!
+        let title = teacherAlert.textFields![2].text!
+        
+        let gender: Gender
+        switch teacherAlert.textFields![3].text! {
+        case "男","male":
+            gender = .male
+        case "女","female":
+            gender = .female
+        default:
+            gender = .unknow
+        }
+        let age = Int(teacherAlert.textFields![4].text!)
+        let depart:Department
+        switch teacherAlert.textFields![5].text! {
+        case "1":
+            depart = .one
+        case "2":
+            depart = .two
+        case "3":
+            depart = .three
+        default:
+            depart = .one
+        }
+        
+        let teacher = Teacher(title: title, firstName: firstN, lastName: lastN, age: age!, gender: gender, department: depart)
+        teachersArry.append(teacher)
     }
     
     @IBAction func edit(_ sender: Any) {
@@ -118,18 +178,18 @@ class ViewController: UIViewController,UITableViewDataSource,UITableViewDelegate
 //---------学生的添加功能----------
     @IBAction func stuAddButton(_ sender: Any) {
         addStudent()
-        stuTable.reloadData()
+        
     }
     
     @IBAction func stuEditButton(_ sender: Any) {
         stuTable.isEditing = !stuTable.isEditing
     }
+    //
     
     
-    
-    
-    /// 添加学生提示框
+    // 添加学生提示框
    var  alert:UIAlertController!
+    
     @objc func addStudent() {
         
         alert = UIAlertController(title: "hh", message: "ss", preferredStyle: .alert)
@@ -151,6 +211,7 @@ class ViewController: UIViewController,UITableViewDataSource,UITableViewDelegate
         
         let OKBtn = UIAlertAction(title: "确定", style: .default) { (alert) in
             self.add()
+            self.stuTable.reloadData()
         }
         let cancelBtn = UIAlertAction(title: "取消", style: .cancel, handler: nil)
         alert.addAction(OKBtn)
@@ -175,6 +236,7 @@ class ViewController: UIViewController,UITableViewDataSource,UITableViewDelegate
         }
         let age = Int(alert.textFields![4].text!)
         let student = Student(stuNo: no!, firstName: firstName, lastName: lastName, age: age!, gender: gender)
+        
         studentsArry.append(student)
     }
 //--------------------------
